@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "394668752772",
+    "project_id": "flash-chat-c2eda",
+    "storage_bucket": "flash-chat-c2eda.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:394668752772:android:462b96d9e3bca376f627d1",
+        "android_client_info": {
+          "package_name": "co.AbdulazizAlasiri.flash_chat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "394668752772-2079kf752rel24n7ro6f83sdti4vqq40.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_lJObBxoi7Ix5t_6ntCeZmhf5EbgwzsI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "394668752772-2079kf752rel24n7ro6f83sdti4vqq40.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
