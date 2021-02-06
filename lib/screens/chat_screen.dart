@@ -64,33 +64,8 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            StreamBuilder(
-              stream: messagesRef.snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return CircularProgressIndicator();
-                }
-                final List<QueryDocumentSnapshot> messages = snapshot.data.docs;
-                List<ChatBubble> messagesWidget = [];
-
-                for (QueryDocumentSnapshot msg in messages) {
-                  final String messageText = msg.data()['message'];
-                  final String messageSender = msg.data()['email'];
-
-                  final ChatBubble messageBubble = ChatBubble(
-                    text: messageText,
-                    from: messageSender,
-                  );
-
-                  messagesWidget.add(messageBubble);
-                }
-                return Expanded(
-                  child: ListView(
-                    children: messagesWidget,
-                  ),
-                );
-              },
-            ),
+            MessagesStream(
+                messagesRef: messagesRef, loggedInUser: loggedInUser),
             Container(
               decoration: kMessageContainerDecoration,
               child: Row(
@@ -114,6 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         _firestore.collection('messages').add(<String, dynamic>{
                           'email': loggedInUser.email,
                           'message': message,
+                          'time': Timestamp.now()
                         });
                       }
                     },
@@ -132,31 +108,102 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
+class MessagesStream extends StatelessWidget {
+  const MessagesStream(
+      {Key key, @required this.messagesRef, @required this.loggedInUser})
+      : super(key: key);
+
+  final CollectionReference messagesRef;
+  final loggedInUser;
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: messagesRef.orderBy('time', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+        final List<QueryDocumentSnapshot> messages = snapshot.data.docs;
+        List<ChatBubble> messagesWidget = [];
+
+        for (QueryDocumentSnapshot msg in messages) {
+          final String messageText = msg.data()['message'];
+          final String messageSender = msg.data()['email'];
+          final Timestamp time = msg.data()['time'];
+
+          final ChatBubble messageBubble = ChatBubble(
+            text: messageText,
+            from: messageSender,
+            isMe: loggedInUser.email == messageSender,
+          );
+
+          messagesWidget.add(messageBubble);
+        }
+        return Expanded(
+          child: ListView(
+            reverse: true,
+            children: messagesWidget,
+          ),
+        );
+      },
+    );
+  }
+}
+
 enum BubbleType { sender, recever, info }
 
 class ChatBubble extends StatelessWidget {
-  ChatBubble({this.from, @required this.text, this.time});
+  ChatBubble({this.from, @required this.text, this.time, this.isMe = false});
   final String from;
   final String text;
   final DateTime time;
+  final bool isMe;
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Text(from),
-        Material(
-          color: Colors.lightBlueAccent,
-          borderRadius: BorderRadius.circular(15),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 15, color: Colors.white),
+      child: Column(
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          isMe
+              ? Container()
+              : Text(
+                  from,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey,
+                  ),
+                ),
+          Container(
+            constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75),
+            child: Material(
+              elevation: 10,
+              color: isMe ? Colors.lightBlueAccent : Colors.white,
+              borderRadius: isMe
+                  ? BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      bottomLeft: Radius.circular(15),
+                      bottomRight: Radius.circular(15))
+                  : BorderRadius.only(
+                      topRight: Radius.circular(15),
+                      bottomLeft: Radius.circular(15),
+                      bottomRight: Radius.circular(15)),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                      fontSize: 15,
+                      color: isMe ? Colors.white : Colors.black45),
+                ),
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
